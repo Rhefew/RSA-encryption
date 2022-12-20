@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">RSA E2E Encryption</string>
+    <string name="others_example_public_key">MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAq3/CCF4FufF6Or0B+dviO4bcMFf/pwUT
+    d9j3As2V2uG7g8EgV5RVcZb4DI/6eP9M06jzB2AWtZeFE9Y1TOV0/n3XvWS30hUbSGP7tk59lwhk
+    q9RO38DpbsOmM1s14G8f23kg9eDW8QlsXF3D3U617Oxjv3dUwNb6BoV032G1WEyjr1S5cBIiWz1L
+    MRDsCRvqw/MRt6TqPmkqSbq+bm+BdQn0yzASinHF1bFa+lsVKBPw1noSYQw0QWdIonhEtRC0nPqM
+    E1BOnBRdcrbe7xD5HYFKmecr+UHLpjGVELvJEMj/R2CdlebsGe79BE+UNZScWN0Ihh64GhRppdAi
+    K/c+NwIDAQAB
+    </string>
+</resources>
