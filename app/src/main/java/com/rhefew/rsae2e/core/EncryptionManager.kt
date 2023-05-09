@@ -5,77 +5,64 @@ import java.security.KeyFactory
 import java.security.PublicKey
 import java.security.spec.X509EncodedKeySpec
 
-class EncryptionManager() {
+import java.security.*
+import javax.crypto.*
+import javax.crypto.spec.*
+
+class EncryptionManager {
 
     companion object {
-        const val MASTER_KEY = "master_key"
-        const val KEY_PAIR_ALGORITHM = "RSA"
-        const val KEY_SIZE: Int = 2048
-        const val KEY_PROVIDER = "AndroidKeyStore"
-        const val TRANSFORMATION_ASYMMETRIC = "RSA/None/PKCS1Padding"
-    }
+        private const val RSA_ALGORITHM = "RSA"
+        private const val AES_ALGORITHM = "AES"
+        private const val AES_KEY_SIZE = 2048
 
-    private val keyStoreWrapper = KeyStoreWrapper()
-
-    /*
-     * Encryption Stage
-     */
-    fun createMasterKey() {
-        if (keyStoreWrapper.getAndroidKeyStoreAsymmetricKeyPair(MASTER_KEY) == null) {
-            keyStoreWrapper.createAndroidKeyStoreAsymmetricKey(MASTER_KEY)
+        fun generateRSAKeyPair(): KeyPair {
+            val keyPairGenerator = KeyPairGenerator.getInstance(RSA_ALGORITHM)
+            keyPairGenerator.initialize(2048)
+            return keyPairGenerator.generateKeyPair()
         }
-    }
 
-    fun removeMasterKey() {
-        keyStoreWrapper.removeAndroidKeyStoreKey(MASTER_KEY)
-    }
+        fun rsaEncrypt(data: ByteArray, publicKey: PublicKey): ByteArray {
+            val cipher = Cipher.getInstance(RSA_ALGORITHM)
+            cipher.init(Cipher.ENCRYPT_MODE, publicKey)
+            return cipher.doFinal(data)
+        }
 
-    fun encrypt(data: String): String? {
-        val masterKey = keyStoreWrapper.getAndroidKeyStoreAsymmetricKeyPair(MASTER_KEY)
-        return CipherWrapper(TRANSFORMATION_ASYMMETRIC).encrypt(data, masterKey?.public)
-    }
+        fun rsaDecrypt(data: ByteArray, privateKey: PrivateKey): ByteArray {
+            val cipher = Cipher.getInstance(RSA_ALGORITHM)
+            cipher.init(Cipher.DECRYPT_MODE, privateKey)
+            return cipher.doFinal(data)
+        }
 
-    fun encrypt(data: ByteArray): ByteArray? {
-        val masterKey = keyStoreWrapper.getAndroidKeyStoreAsymmetricKeyPair(MASTER_KEY)
-        return CipherWrapper(TRANSFORMATION_ASYMMETRIC).encrypt(data, masterKey?.public)
-    }
+        fun aesEncrypt(data: ByteArray, key: ByteArray): ByteArray {
+            val secretKey = SecretKeySpec(key, AES_ALGORITHM)
+            val cipher = Cipher.getInstance(AES_ALGORITHM)
+            cipher.init(Cipher.ENCRYPT_MODE, secretKey)
+            return cipher.doFinal(data)
+        }
 
-    fun encryptOthers(data: String, key: PublicKey): String? {
-        return CipherWrapper(TRANSFORMATION_ASYMMETRIC).encrypt(data, key)
-    }
+        fun aesDecrypt(data: ByteArray, key: ByteArray): ByteArray {
+            val secretKey = SecretKeySpec(key, AES_ALGORITHM)
+            val cipher = Cipher.getInstance(AES_ALGORITHM)
+            cipher.init(Cipher.DECRYPT_MODE, secretKey)
+            return cipher.doFinal(data)
+        }
 
-    fun encryptOthers(data: ByteArray, key: PublicKey): ByteArray? {
-        return CipherWrapper(TRANSFORMATION_ASYMMETRIC).encrypt(data, key)
-    }
+        fun generateAESKey(): ByteArray {
+            val keyGenerator = KeyGenerator.getInstance(AES_ALGORITHM)
+            keyGenerator.init(AES_KEY_SIZE)
+            return keyGenerator.generateKey().encoded
+        }
 
-    fun decrypt(data: String): String? {
-        val masterKey = keyStoreWrapper.getAndroidKeyStoreAsymmetricKeyPair(MASTER_KEY)
-        return CipherWrapper(TRANSFORMATION_ASYMMETRIC).decrypt(data, masterKey?.private)
-    }
+        fun exchangeAESKey(publicKey: PublicKey): ByteArray {
+            // Generate a random AES key
+            val aesKey = generateAESKey()
 
-    fun decrypt(data: ByteArray): ByteArray? {
-        val masterKey = keyStoreWrapper.getAndroidKeyStoreAsymmetricKeyPair(MASTER_KEY)
-        return CipherWrapper(TRANSFORMATION_ASYMMETRIC).decrypt(data, masterKey?.private)
-    }
+            // Encrypt the AES key with the recipient's RSA public key
+            val encryptedAesKey = rsaEncrypt(aesKey, publicKey)
 
-    /*
-     * Manage Keys
-     */
-    fun getMyPublicKey(): PublicKey? {
-        val masterKey = keyStoreWrapper.getAndroidKeyStoreAsymmetricKeyPair(MASTER_KEY)
-        return masterKey?.public
-    }
-
-    fun getOtherPublicKey(key: String): PublicKey? {
-        return try {
-            val publicBytes: ByteArray =
-                Base64.decode(key, Base64.DEFAULT)
-            val keySpec = X509EncodedKeySpec(publicBytes)
-            val keyFactory = KeyFactory.getInstance(KEY_PAIR_ALGORITHM)
-            keyFactory.generatePublic(keySpec)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
+            // Return the encrypted AES key
+            return encryptedAesKey
         }
     }
 }
