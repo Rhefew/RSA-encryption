@@ -1,68 +1,54 @@
 package com.rhefew.rsae2e.core
 
-import android.util.Base64
 import java.security.KeyFactory
+import java.security.PrivateKey
 import java.security.PublicKey
+import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
-
-import java.security.*
-import javax.crypto.*
-import javax.crypto.spec.*
+import javax.crypto.Cipher
 
 class EncryptionManager {
 
-    companion object {
-        private const val RSA_ALGORITHM = "RSA"
-        private const val AES_ALGORITHM = "AES"
-        private const val AES_KEY_SIZE = 2048
+    private val encryptionAlgorithm = "RSA"
+    private val transformation = "RSA/ECB/PKCS1Padding"
 
-        fun generateRSAKeyPair(): KeyPair {
-            val keyPairGenerator = KeyPairGenerator.getInstance(RSA_ALGORITHM)
-            keyPairGenerator.initialize(2048)
-            return keyPairGenerator.generateKeyPair()
-        }
+    fun decryptMessage(encryptedMessage: String, privateKeyString: String): String {
+        // Convert the private key string to bytes
+        val privateKeyBytes = privateKeyString.fromBase64ToByteArray()
 
-        fun rsaEncrypt(data: ByteArray, publicKey: PublicKey): ByteArray {
-            val cipher = Cipher.getInstance(RSA_ALGORITHM)
-            cipher.init(Cipher.ENCRYPT_MODE, publicKey)
-            return cipher.doFinal(data)
-        }
+        // Create a private key object from the bytes
+        val keySpec = PKCS8EncodedKeySpec(privateKeyBytes)
+        val keyFactory = KeyFactory.getInstance(encryptionAlgorithm)
+        val privateKey: PrivateKey = keyFactory.generatePrivate(keySpec)
 
-        fun rsaDecrypt(data: ByteArray, privateKey: PrivateKey): ByteArray {
-            val cipher = Cipher.getInstance(RSA_ALGORITHM)
-            cipher.init(Cipher.DECRYPT_MODE, privateKey)
-            return cipher.doFinal(data)
-        }
+        // Initialize the cipher with the private key and decryption mode
+        val cipher = Cipher.getInstance(transformation)
+        cipher.init(Cipher.DECRYPT_MODE, privateKey)
 
-        fun aesEncrypt(data: ByteArray, key: ByteArray): ByteArray {
-            val secretKey = SecretKeySpec(key, AES_ALGORITHM)
-            val cipher = Cipher.getInstance(AES_ALGORITHM)
-            cipher.init(Cipher.ENCRYPT_MODE, secretKey)
-            return cipher.doFinal(data)
-        }
+        // Decrypt the message
+        val encryptedMessageBytes = encryptedMessage.fromBase64ToByteArray()
+        val decryptedMessageBytes = cipher.doFinal(encryptedMessageBytes)
 
-        fun aesDecrypt(data: ByteArray, key: ByteArray): ByteArray {
-            val secretKey = SecretKeySpec(key, AES_ALGORITHM)
-            val cipher = Cipher.getInstance(AES_ALGORITHM)
-            cipher.init(Cipher.DECRYPT_MODE, secretKey)
-            return cipher.doFinal(data)
-        }
+        // Convert the decrypted bytes to a string
+        return String(decryptedMessageBytes)
+    }
 
-        fun generateAESKey(): ByteArray {
-            val keyGenerator = KeyGenerator.getInstance(AES_ALGORITHM)
-            keyGenerator.init(AES_KEY_SIZE)
-            return keyGenerator.generateKey().encoded
-        }
+    fun encryptMessage(message: String, publicKeyBytes: ByteArray): String {
+        // Convert the public key string to bytes
 
-        fun exchangeAESKey(publicKey: PublicKey): ByteArray {
-            // Generate a random AES key
-            val aesKey = generateAESKey()
+        // Create a public key object from the bytes
+        val keySpec = X509EncodedKeySpec(publicKeyBytes)
+        val keyFactory = KeyFactory.getInstance(encryptionAlgorithm)
+        val publicKey: PublicKey = keyFactory.generatePublic(keySpec)
 
-            // Encrypt the AES key with the recipient's RSA public key
-            val encryptedAesKey = rsaEncrypt(aesKey, publicKey)
+        // Initialize the cipher with the public key and encryption mode
+        val cipher = Cipher.getInstance(transformation)
+        cipher.init(Cipher.ENCRYPT_MODE, publicKey)
 
-            // Return the encrypted AES key
-            return encryptedAesKey
-        }
+        // Encrypt the message
+        val encryptedMessageBytes = cipher.doFinal(message.toByteArray())
+
+        // Base64 encode the encrypted message bytes
+        return encryptedMessageBytes.toBase64()
     }
 }
