@@ -1,6 +1,7 @@
 package com.rhefew.rsae2e
 
 import com.rhefew.rsae2e.core.EncryptionManager
+import com.rhefew.rsae2e.core.fromBase64ToByteArray
 import org.junit.Test
 
 import org.junit.Assert.*
@@ -22,7 +23,7 @@ class ExampleUnitTest {
     fun testEncryptionDecryptionWithOwnKeys() {
         val message = "Hello, World!"
 
-        val encryptedMessage = encryptionManager.encryptMessage(message, publicKeyString)
+        val encryptedMessage = encryptionManager.encryptMessage(message, publicKeyString.fromBase64ToByteArray())
         val decryptedMessage = encryptionManager.decryptMessage(encryptedMessage, privateKeyString)
 
         assertEquals(message, decryptedMessage)
@@ -32,7 +33,7 @@ class ExampleUnitTest {
     fun testEncryptionDecryptionWithRemoteKeys() {
         val message = "Hello, World!"
 
-        val encryptedMessage = encryptionManager.encryptMessage(message, remotePublicKeyString)
+        val encryptedMessage = encryptionManager.encryptMessage(message, remotePublicKeyString.fromBase64ToByteArray())
         val decryptedMessage = encryptionManager.decryptMessage(encryptedMessage, privateKeyString)
 
         assertEquals(message, decryptedMessage)

@@ -11,10 +11,13 @@ class EncryptionManager {
 
     private val encryptionAlgorithm = "RSA"
     private val transformation = "RSA/ECB/PKCS1Padding"
+    private val bookendRegex = "-----.*?-----"
 
     fun decryptMessage(encryptedMessage: String, privateKeyString: String): String {
         // Convert the private key string to bytes
-        val privateKeyBytes = privateKeyString.fromBase64ToByteArray()
+        val privateKeyBytes = privateKeyString
+            .replace(Regex(bookendRegex), "")
+            .fromBase64ToByteArray()
 
         // Create a private key object from the bytes
         val keySpec = PKCS8EncodedKeySpec(privateKeyBytes)

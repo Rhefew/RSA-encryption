@@ -2,6 +2,9 @@ package com.rhefew.rsae2e
 
 import android.os.Build
 import android.os.Bundle
+import android.widget.Button
+import android.widget.EditText
+import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import com.rhefew.rsae2e.core.EncryptionManager
@@ -17,7 +20,14 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        val publicKeyEdit = findViewById<EditText>(R.id.txtPublicKey)
+        val privateKeyEdit = findViewById<EditText>(R.id.txtPrivateKey)
+
         val keys = generateRSAKeys()
+
+        publicKeyEdit.setText(keys.publicKeyString)
+        privateKeyEdit.setText(keys.privateKeyString)
+
 
 //        //Rhefew data
 //        val myLastPublicKey =
@@ -38,10 +48,27 @@ class MainActivity : AppCompatActivity() {
 //            assert(kdecrypted == "Hello worlds")
 //        }
 
+        val input = findViewById<TextView>(R.id.txtInput).text
+        val encryptedResult = findViewById<EditText>(R.id.encryptedResult)
+        val decryptedResult = findViewById<EditText>(R.id.decryptedResult)
 
-        val message = "If you decripted me, you won a candy!"
-        val encrypted = EncryptionManager().encryptMessage(message, keys.publicKeyByteArray)
-        val decrypted = EncryptionManager().decryptMessage(encrypted, keys.privateKeyByteArray.toBase64())
-        encrypted.toString()
+
+        val buttonEncrypt = findViewById<Button>(R.id.btnEncrypt)
+        buttonEncrypt.setOnClickListener{
+            val encrypted = EncryptionManager().encryptMessage(input.toString(), keys.publicKeyByteArray)
+            encryptedResult.setText(encrypted)
+        }
+
+        val buttonDecrypt = findViewById<Button>(R.id.btnDecrypt)
+        buttonDecrypt.setOnClickListener{
+            val decrypted = EncryptionManager().decryptMessage(encryptedResult.text.toString(), keys.privateKeyByteArray.toBase64())
+            decryptedResult.setText(decrypted)
+        }
+0
+
+//        //others key and message
+//        val decrypt = EncryptionManager().decryptMessage("J1WrM/pLathuT33s+SloSvqD3HZ1RRAf7XWucX7bHXbZz8XERImR+QmIoXqUHfGYZohXsnrrOiGuc/qZSqy+fWa5g/UMa8BKeFnQ9L8VoPMLjZZvN2XQs5zpCX+d/+IFhy73rtk7l3u0Iqpr+5TNIuGDH+4tSOFOUqDA5XbFHqXqSfkCErq1nxeHGRps4acfyklEA1THYDY7I9pFsqwBKPmoDGNgcLUQLL0awDPOBHsSwya84YQ+0IeJr6a/mmbElLESo2kYxWS3mjghIzEt/MWCiUdVXvZQdYGvLZJ2RN20r2Wv0oICrfMH4RppasEzsudjBN6VjpGkh/e93GJLow==",
+//                "-----BEGIN RSA PRIVATE KEY-----MIIEpAIBAAKCAQEAh2VnqIEmHHqX8KVA7yEhzQWXsX6VvSMfGisVwzASWaP8bYEVkYSG/owlzJjhfFy30yswAwZQEp7Qt/rQRMpJErp3rREkqmKLYwULdZ19ZUyNuNzRMURkFASI8/aonXtSQyjtrurKTCS5OZehX6w1T/0r+B6n6v+mVnRhMMUJ+HY7pt3PO9RJuXbp+Gb2b8psBaAnqMMPkkBxUWjSswEx85s71oKYER1AJNVlKdnDxA/TDFaklgFre/z97z7zVdiIY4htwxoN5xnv1uFfvFufPiricURGYtKvrhe1epuAFI9bLuguZAJCH+cvQLb+KcHCqvfGAcaLQB6ipHx327hG6wIDAQABAoIBAGAmvldm5/a/hNlLsfJf+A4OE6zj9Vis8XB2+mxz3gQ0tZXaXsPJdsicJFfIlhDoE09uUxlCyWh/yj9taawAb6ZSL50DGKO7ebsnIP00i5F9rQOEJTc0l1Gz6sI9/35ezouNLEXUzTcHuVZR/TLhK7cTVr9Mnfj/9lNdMIwe0bbUxDMoVUIVKQtENlXpyecDLE5F7uucDfYZocRgdIzRBVdTmoXl8kNbpqHQrWE3T0AMAXHgOZwgTRvk9Pw3QpXIj7P7LJ6lJEYFFcZ9cHo1yK5BVVeYzjunceAgU/jZ7+NhW2JmAjvhwBMkUgnQuH5Zx3PKY9OCSfPcdLoM3kGgO7kCgYEA+XCJE4hbz5DOWnWETrz90vFnM66TgWjDsUbvqFDBS7Ezoa/l0WQ2fM5gbDFc2TxGXEY83O8+iua0yQWutiLJvqliFe2PdWDBs78mkRKtGvjFhZet8Elpji6op6f55ysn/vHLfG5Z9PVaBw2ELSwIRAKjLc0Mh8sdcodlYcZ3dXUCgYEAivUFMuUqYrD0Xvwkz5hH379PPXeCiHqqk2YKEmOVRbJ2M41gTAGo1SmQv8baWHNzOsCzdNg0udNKBFu26hNDkBhbo9BceAVy6G0wsdpdjK5hAMQZ9C/279/YjbWDD1B3PHJwAhYcUZsRZ7r2vOiGKNAtWEvATbac2BdnpTFoXt8CgYEAlzFrJPfGDq5LJfGNXNyZTb8dOupaZlpGI7JHmdI5F9Q045Bm0ODZVhURxQK2sMYkL9IzGge59R+Z/S8Ak03K01KALaJtDkyznGwEyHJ1kp+vuiYSPE+DN7d4awcaJtC10YZmPOn2hNAi3ZuHvomuCOtAVYawTa8EDmObRAS0a/ECgYA/mIf6lRti863D0w5d3En4wyvW691X7RwoPakaZW0p6tViHrAV2SSV+mH/A1lm5d+04gC/1zu6WFMlz3vVgV+IkT1PqcrIO2Ytrdt9an0qJ5zJpvZh5ZnUitQndw02cxM/HPjaW5g2WQwMN2s5ZgoQn8ZBBNpMNultlLigyA4GbQKBgQC0URVUeaQH5CWGW0NsQnCW1XGBp1EbP45dPzYLwgPlGDCVN1SHHSkCDUS5pqnBnYhdMlPCo6CotDUTnSczBAkmH8jrUj66CHc+/CFvJAnoqr9cfyO9iR+e35vl8oTZUJttZ7L4hdiNb0A6V7FbYnviwJWq7WtUsZVxP6fTy1nb/A==-----END RSA PRIVATE KEY-----")
+//        println(decrypt)
     }
 }
