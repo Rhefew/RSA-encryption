@@ -13,45 +13,70 @@ class EncryptionManager {
     private val transformation = "RSA/ECB/PKCS1Padding"
     private val bookendRegex = "-----.*?-----"
 
-    fun decryptMessage(encryptedMessage: String, privateKeyString: String): String {
-        // Convert the private key string to bytes
-        val privateKeyBytes = privateKeyString
-            .replace(Regex(bookendRegex), "")
-            .fromBase64ToByteArray()
+    // Maximum size of each chunk for encryption/decryption
+    private val MAX_CHUNK_SIZE = 245
 
-        // Create a private key object from the bytes
+    fun encryptMessage(message: String, publicKeyString: ByteArray): Array<String> {
+        val keySpec = X509EncodedKeySpec(publicKeyString)
+        val keyFactory = KeyFactory.getInstance(encryptionAlgorithm)
+        val publicKey: PublicKey = keyFactory.generatePublic(keySpec)
+
+        val cipher = Cipher.getInstance(transformation)
+        cipher.init(Cipher.ENCRYPT_MODE, publicKey)
+
+        val messageBytes = message.encodeToByteArray()
+
+        // List to hold the encrypted chunks
+        val encryptedChunks = mutableListOf<String>()
+
+        // Encrypt the message in chunks
+        var offset = 0
+        while (offset < messageBytes.size) {
+            val chunkSize = minOf(MAX_CHUNK_SIZE, messageBytes.size - offset)
+            val chunk = cipher.doFinal(messageBytes, offset, chunkSize)
+            val encryptedChunk = chunk.toBase64()
+            encryptedChunks.add(encryptedChunk)
+            offset += chunkSize
+        }
+
+        return encryptedChunks.toTypedArray()
+    }
+
+    fun decryptMessage(encryptedChunks: Array<String>, privateKeyString: String): String {
+        val privateKeyBytes = privateKeyString.fromBase64ToByteArray()
         val keySpec = PKCS8EncodedKeySpec(privateKeyBytes)
         val keyFactory = KeyFactory.getInstance(encryptionAlgorithm)
         val privateKey: PrivateKey = keyFactory.generatePrivate(keySpec)
 
-        // Initialize the cipher with the private key and decryption mode
         val cipher = Cipher.getInstance(transformation)
         cipher.init(Cipher.DECRYPT_MODE, privateKey)
 
-        // Decrypt the message
-        val encryptedMessageBytes = encryptedMessage.fromBase64ToByteArray()
-        val decryptedMessageBytes = cipher.doFinal(encryptedMessageBytes)
+        // List to hold the decrypted chunks
+        val decryptedChunks = mutableListOf<ByteArray>()
 
-        // Convert the decrypted bytes to a string
-        return String(decryptedMessageBytes)
+        // Decrypt the chunks
+        for (encryptedChunk in encryptedChunks) {
+            val encryptedChunkBytes = encryptedChunk.fromBase64ToByteArray()
+            val decryptedChunk = cipher.doFinal(encryptedChunkBytes)
+            decryptedChunks.add(decryptedChunk)
+        }
+
+        // Concatenate the decrypted chunks and convert to string
+        val decryptedMessageBytes = concatByteArrays(*decryptedChunks.toTypedArray())
+        val decryptedMessage = String(decryptedMessageBytes)
+
+        return decryptedMessage
     }
 
-    fun encryptMessage(message: String, publicKeyBytes: ByteArray): String {
-        // Convert the public key string to bytes
-
-        // Create a public key object from the bytes
-        val keySpec = X509EncodedKeySpec(publicKeyBytes)
-        val keyFactory = KeyFactory.getInstance(encryptionAlgorithm)
-        val publicKey: PublicKey = keyFactory.generatePublic(keySpec)
-
-        // Initialize the cipher with the public key and encryption mode
-        val cipher = Cipher.getInstance(transformation)
-        cipher.init(Cipher.ENCRYPT_MODE, publicKey)
-
-        // Encrypt the message
-        val encryptedMessageBytes = cipher.doFinal(message.toByteArray())
-
-        // Base64 encode the encrypted message bytes
-        return encryptedMessageBytes.toBase64()
+    // Concatenate multiple byte arrays into a single byte array
+    private fun concatByteArrays(vararg byteArrays: ByteArray): ByteArray {
+        val totalSize = byteArrays.sumOf { it.size }
+        val result = ByteArray(totalSize)
+        var offset = 0
+        for (byteArray in byteArrays) {
+            System.arraycopy(byteArray, 0, result, offset, byteArray.size)
+            offset += byteArray.size
+        }
+        return result
     }
 }
