@@ -6,7 +6,7 @@ import java.security.KeyPairGenerator
 import java.util.Base64
 
 const val ALGORITHM_RSA = "RSA"
-const val KEY_SIZE = 2048
+const val KEY_SIZE = 4096
 
 const val TYPE_KEY_PUBLIC = "PUBLIC KEY"
 const val TYPE_KEY_PRIVATE = "PRIVATE KEY"

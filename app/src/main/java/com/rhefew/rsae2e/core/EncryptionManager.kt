@@ -14,7 +14,8 @@ class EncryptionManager {
     private val bookendRegex = "-----.*?-----"
 
     // Maximum size of each chunk for encryption/decryption
-    private val MAX_CHUNK_SIZE = 245
+    private val RSA_KEY_SIZE = 4096
+    private val MAX_CHUNK_SIZE = (RSA_KEY_SIZE / 8) - 11
 
     fun encryptMessage(message: String, publicKeyString: ByteArray): Array<String> {
         val keySpec = X509EncodedKeySpec(publicKeyString)
